@@ -1,6 +1,6 @@
 # Makefile for yang.cpp
 
-CC = g++-mp-4.8
+CC = g++
 
 # Flags to the compiler
 
