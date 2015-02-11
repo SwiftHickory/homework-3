@@ -14,11 +14,27 @@
 #include <fstream>
 #include <cstring>
 #include <cstdlib>
+#include <iomanip>
 
 using namespace std;
 
 // get the index of a string in a string array
 int indexInArray(string const &str, string * const &strArray, int length);
+
+// print the error message to terminal and error file
+void errorMessage(int entryNumber, string station, string instrument,
+    int numberOfEvents, string error, ofstream &errorFile);
+
+// print the statistics of total and correct number of entries to both terminal and file
+void entryMessage(int totalEntry, int correctEntry, ofstream &errorFile);
+
+// print summary to the output file
+void summaryPrint(int ** const &table, int numberOfStations, int numberOfInStruments,
+    int * const &eventsPerStation, int * const &eventsPerInstrument, ofstream &outputFile,
+    string * const &stationList, string * const &instrumentList);
+
+// find minima and maxima valuse in an integer array
+void minmax(int * const &array, int length, int &min, int &max);
 
 // main function
 int main() {
@@ -57,7 +73,7 @@ int main() {
 
     // open the output file and perform sanity checks
     // output file should always be yang.out
-    outputFile.open("yang.cpp");
+    outputFile.open("yang.out");
     if (!outputFile.is_open()) {
         cerr << "Cannot create output file: yang.cpp" << endl;
         exit(EXIT_FAILURE);
@@ -110,10 +126,10 @@ int main() {
             table[i][j] = 0;
 
     // read the entry line by line
-    cout << "Reading entries" << endl;
-    while (inputFile >> station) {
-        // then read the instrument and number of events
-        inputFile >> instrument >> numberOfEvents;
+    cout << "Reading entries..." << endl;
+    while (inputFile >> station >> instrument >> numberOfEvents) {
+        // increment of entry
+        entryNumber++;
 
         // get the index in the list
         indexOfStation = indexInArray(station, stationList, numberOfStations);
@@ -122,11 +138,11 @@ int main() {
         // check whether this entry is existed
         if (indexOfStation >= 0) {
             if (indexOfInstrument >= 0) {
-                //update the table
-                table[indexOfStation][indexOfInstrument]++;
-
                 // check whether the number of event is a non-negative number
                 if (numberOfEvents >= 0) {
+                    //update the table
+                    table[indexOfStation][indexOfInstrument] += numberOfEvents;
+
                     // update number of events of each station
                     eventsPerStation[indexOfStation] += numberOfEvents;
 
@@ -137,39 +153,23 @@ int main() {
                     correctEntryNumber++;
                 } else {
                     // if number of event is a negative number
-                    // print the error message to terminal
-                    cout << "Entry #" << entryNumber << ": " << station << " " << instrument
-                         << " " << numberOfEvents << " -- Warning: Negative events" << endl;
-
-                    // print the error message to error file
-                    errorFile << "Entry #" << entryNumber << ": " << station << " " << instrument
-                              << " " << numberOfEvents << " -- Warning: Negative events" << endl;
-
+                    errorMessage(entryNumber, station, instrument, numberOfEvents, "Negative events", errorFile);
                 }
-
+            } else {
                 // if the instrument does not exist
-                // print the error message to terminal
-                cout << "Entry #" << entryNumber << ": " << station << " " << instrument
-                     << " " << numberOfEvents << " -- Warning: instrument does not exist" << endl;
-
-                // print the error message to error file
-                errorFile << "Entry #" << entryNumber << ": " << station << " " << instrument
-                          << " " << numberOfEvents << " -- Warning: Instrument does not exist" << endl;
+                errorMessage(entryNumber, station, instrument, numberOfEvents, "instrument does not exist", errorFile);
             }
-
+        } else {
             // if the station does not exist
-            // print the error message to terminal
-            cout << "Entry #" << entryNumber << ": " << station << " " << instrument
-                 << " " << numberOfEvents << " -- Warning: Station does not exist" << endl;
-
-            // print the error message to error file
-            errorFile << "Entry #" << entryNumber << ": " << station << " " << instrument
-                      << " " << numberOfEvents << " -- Warning: Station does not exist" << endl;
+            errorMessage(entryNumber, station, instrument, numberOfEvents, "station does not exist", errorFile);
         }
-
-        // increment of entry
-        entryNumber++;
     }
+
+    entryMessage(entryNumber, correctEntryNumber, errorFile);
+    cout << "Generating report..." << endl;
+
+    summaryPrint(table, numberOfStations, numberOfInStruments, eventsPerStation,
+        eventsPerInstrument, outputFile, stationList, instrumentList);
 
     // delete the allocated memory
     delete [] stationList;
@@ -191,6 +191,8 @@ int main() {
     // close the error file
     errorFile.close();
 
+    cout << "Completed" << endl;
+
     return 0;
     
 }
@@ -208,5 +210,154 @@ int indexInArray(string const &str, string * const &strArray, int length) {
 
     // if the string is not in this array, return -1
     return -1;
+
+}
+
+// print the error message to terminal and error file
+void errorMessage(int entryNumber, string station, string instrument,
+    int numberOfEvents, string error, ofstream &errorFile) {
+
+    // print the error message to terminal
+    cout << "Entry #" << entryNumber << ": " << station << " " << instrument
+         << " " << numberOfEvents << " -- Warning: " << error << endl;
+
+    // print the error message to error file
+    errorFile << "Entry #" << entryNumber << ": " << station << " " << instrument
+         << " " << numberOfEvents << " -- Warning: " << error << endl;
+
+    return;
+
+}
+
+// print the statistics of total and correct number of entries to both terminal and file
+void entryMessage(int totalEntry, int correctEntry, ofstream &errorFile) {
+
+    // print number of correct entries
+    if (correctEntry < 2) {
+        cout << "Total of " << correctEntry << " entry processed correctly" << endl;
+        errorFile << "Total of " << correctEntry << " entry processed correctly" << endl;
+    } else {
+        cout << "Total of " << correctEntry << " entries processed correctly" << endl;
+        errorFile << "Total of " << correctEntry << " entries processed correctly" << endl;
+    }
+
+    // print number of ingored entries
+    int ignoredEntry = totalEntry - correctEntry;
+    if ( ignoredEntry < 2) {
+        cout << "Total of " << ignoredEntry << " entry ignored" << endl;
+        errorFile << "Total of " << ignoredEntry << " entry ignored" << endl;
+    } else {
+        cout << "Total of " << ignoredEntry << " entries ignored" << endl;
+        errorFile << "Total of " << ignoredEntry << " entries ignored" << endl;
+    }
+
+    return;
+
+}
+
+// print summary to the output file
+void summaryPrint(int ** const &table, int numberOfStations, int numberOfInStruments,
+    int * const &eventsPerStation, int * const &eventsPerInstrument, ofstream &outputFile,
+    string * const &stationList, string * const &instrumentList) {
+
+    outputFile << "Seismic Events Summary Report" << endl;
+
+    // print the tabulated events data
+    outputFile << setw(15) << "Station";
+    for (int i = 0; i < numberOfInStruments; i++) {
+        outputFile << setw(20) << instrumentList[i];
+    }
+    outputFile << endl;
+
+    // print for each station
+    for (int i = 0; i < numberOfStations; i++) {
+        outputFile << setw(15) << stationList[i];
+
+        for (int j = 0; j < numberOfInStruments; j++) {
+            outputFile << setw(20) << table[i][j];
+        }
+
+        outputFile << endl;
+    }
+    outputFile << endl;
+
+    // print total events per station
+    outputFile << "Total number of events per station" << endl << endl;
+    outputFile << setw(15) << "Station" << setw(10) << "Total" << endl;
+
+    for (int i = 0; i < numberOfStations; i++) {
+        outputFile << setw(15) << stationList[i] << setw(10) << eventsPerStation[i] << endl;
+    }
+    outputFile << endl;
+
+    // print total events per instrument
+    outputFile << "Total number of events per instrument" << endl << endl;
+    outputFile << setw(20) << "Instrument" << setw(10) << "Total" << endl;
+
+    for (int i = 0; i < numberOfInStruments; i++) {
+        outputFile << setw(20) << instrumentList[i] << setw(10) << eventsPerInstrument[i] << endl;
+    }
+    outputFile << endl;
+
+    // pring station(s) with most and least reocrd
+    int min, max;
+    minmax(eventsPerStation, numberOfStations, min, max);
+
+    outputFile  << "Station(s) with the most records is: ";
+    for (int i = 0; i < numberOfStations; i++) {
+        if (eventsPerStation[i] == max) {
+            outputFile  << stationList[i] << ", ";
+        }
+    }
+    outputFile  << "\b\b with " << max << " event(s)" << endl;
+
+    outputFile  << "Station(s) with the least records is: ";
+    for (int i = 0; i < numberOfStations; i++) {
+        if (eventsPerStation[i] == min) {
+            outputFile  << stationList[i] << ", ";
+        }
+    }
+    outputFile  << "\b\b with " << min << " event(s)" << endl;
+
+    // pring instrument(s) with most and least reocrd
+    minmax(eventsPerInstrument, numberOfInStruments, min, max);
+
+    outputFile  << "instrument(s) with the most records is: ";
+    for (int i = 0; i < numberOfInStruments; i++) {
+        if (eventsPerInstrument[i] == max) {
+            outputFile  << instrumentList[i] << ", ";
+        }
+    }
+    outputFile  << "\b\b with " << max << " event(s)" << endl;
+
+    outputFile  << "instrument(s) with the least records is: ";
+    for (int i = 0; i < numberOfInStruments; i++) {
+        if (eventsPerInstrument[i] == min) {
+            outputFile  << instrumentList[i] << ", ";
+        }
+    }
+    outputFile  << "\b\b with " << min << " event(s)" << endl;
+
+    return;
+
+}
+
+// find minima and maxima valuse in an integer array
+void minmax(int * const &array, int length, int &min, int &max) {
+
+    min = array[0];
+    max = array[1];
+
+    for (int i = 0; i < length; i++) {
+        if (array[i] < min) {
+            // check for minima
+            min = array[i];
+        } else if (array[i] > max) {
+            // check for maxima
+            max = array[i];
+        }
+    }
+
+    return;
 
 }
