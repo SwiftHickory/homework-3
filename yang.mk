@@ -4,7 +4,7 @@ CC = g++
 
 # Flags to the compiler
 
-CFLAGS = -Wall
+CFLAGS = 
 
 all: yang
 

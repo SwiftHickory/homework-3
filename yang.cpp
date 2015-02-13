@@ -8,6 +8,8 @@
 -
 -   Version:
 -   02/07/2015    Yang Yang    Initial Code
+-
+-   git
 ******************************************************************************/
 
 #include <iostream>
@@ -19,7 +21,7 @@
 using namespace std;
 
 // get the index of a string in a string array
-int indexInArray(string const &str, string * const &strArray, int length);
+int indexInArray(const string &str, const string strArray[], int length);
 
 // print the error message to terminal and error file
 void errorMessage(int entryNumber, string station, string instrument,
@@ -29,34 +31,34 @@ void errorMessage(int entryNumber, string station, string instrument,
 void entryMessage(int totalEntry, int correctEntry, ofstream &errorFile);
 
 // print summary to the output file
-void summaryPrint(int ** const &table, int numberOfStations, int numberOfInStruments,
-    int * const &eventsPerStation, int * const &eventsPerInstrument, ofstream &outputFile,
-    string * const &stationList, string * const &instrumentList);
+void summaryPrint(const int table[][10], int numberOfStations, int numberOfInStruments,
+    const int eventsPerStation[], const int eventsPerInstrument[], ofstream &outputFile,
+    const string stationList[], const string instrumentList[]);
 
 // find minima and maxima valuse in an integer array
-void minmax(int * const &array, int length, int &min, int &max);
+void minmax(const int array[], int length, int &min, int &max);
 
 // main function
 int main() {
 
-    string inputFileName;       // enter from the terminal
-    ifstream inputFile;         // input file handle
-    ofstream outputFile;        // output file handle
-    ofstream errorFile;         // error file handle
-    int numberOfStations;       // read from input file
-    int numberOfInStruments;    // read from input file
-    string *stationList;        // array to store all the staion names
-    string *instrumentList;     // array to store all the instrument names
-    int **table;                // keep track os the recorded events
-    int *eventsPerStation;      // total number of events per station
-    int *eventsPerInstrument;   // total number of events per instrument
-    int entryNumber = 0;        // record number of entry read from file
-    int correctEntryNumber = 0; // record the number of the correct entry
-    string station;             // station name read from each line
-    string instrument;          // instrument read from each line
-    int numberOfEvents;         // event read from each line
-    int indexOfStation;         // index of a station in the stationList
-    int indexOfInstrument;      // index of an instrument in the instrumentList
+    string inputFileName;               // enter from the terminal
+    ifstream inputFile;                 // input file handle
+    ofstream outputFile;                // output file handle
+    ofstream errorFile;                 // error file handle
+    int numberOfStations;               // read from input file
+    int numberOfInStruments;            // read from input file
+    string stationList[100];            // array to store all the staion names
+    string instrumentList[10];          // array to store all the instrument names
+    int table[100][10] = {0};           // keep track os the recorded events
+    int eventsPerStation[100] = {0};    // total number of events per station
+    int eventsPerInstrument[10] = {0};  // total number of events per instrument
+    int entryNumber = 0;                // record number of entry read from file
+    int correctEntryNumber = 0;         // record the number of the correct entry
+    string station;                     // station name read from each line
+    string instrument;                  // instrument read from each line
+    int numberOfEvents;                 // event read from each line
+    int indexOfStation;                 // index of a station in the stationList
+    int indexOfInstrument;              // index of an instrument in the instrumentList
 
     // prompt user for input file
     cout << "Please Enter input file: ";
@@ -94,36 +96,18 @@ int main() {
     cout << "Number of stations: " << numberOfStations << endl;
     cout << "Number fo instruments: " << numberOfInStruments << endl;
 
-    // allocate corresponding memory for the arrays
-    stationList = new string[numberOfStations];
-    instrumentList = new string[numberOfInStruments];
-    eventsPerStation = new int[numberOfStations];
-    eventsPerInstrument = new int[numberOfInStruments];
-
-    // allocate memory for 2d array table
-    table = new int*[numberOfStations];
-    for (int i = 0; i < numberOfStations; i++)
-        table[i] = new int[numberOfInStruments];
-
     // read the station list and initialize eventsPerStation
     for (int i = 0; i < numberOfStations; i++) {
         inputFile >> stationList[i];
-        eventsPerStation[i] = 0;
     }
 
     // read the instrument list and initialize eventsPerInstrument
     for (int i = 0; i < numberOfInStruments; i++) {
         inputFile >> instrumentList[i];
-        eventsPerInstrument[i] = 0;
     }
 
     cout << "Station read" << endl;
     cout << "Instruments read" << endl;
-
-    // initialize the table
-    for (int i = 0; i < numberOfStations; i++)
-        for (int j = 0; j < numberOfInStruments; j++)
-            table[i][j] = 0;
 
     // read the entry line by line
     cout << "Reading entries..." << endl;
@@ -171,17 +155,6 @@ int main() {
     summaryPrint(table, numberOfStations, numberOfInStruments, eventsPerStation,
         eventsPerInstrument, outputFile, stationList, instrumentList);
 
-    // delete the allocated memory
-    delete [] stationList;
-    delete [] instrumentList;
-    delete [] eventsPerStation;
-    delete [] eventsPerInstrument;
-
-    // delete the 2d array table
-    for (int i = 0; i < numberOfStations; i++)
-        delete [] table[i];
-    delete [] table;
-
     // close the input file
     inputFile.close();
 
@@ -198,7 +171,7 @@ int main() {
 }
 
 // get the index of a string in a string array
-int indexInArray(string const &str, string * const &strArray, int length) {
+int indexInArray(const string &str, const string strArray[], int length) {
 
     // compare the string with each element in the string array in order
     for (int i = 0; i < length; i++) {
@@ -256,25 +229,25 @@ void entryMessage(int totalEntry, int correctEntry, ofstream &errorFile) {
 }
 
 // print summary to the output file
-void summaryPrint(int ** const &table, int numberOfStations, int numberOfInStruments,
-    int * const &eventsPerStation, int * const &eventsPerInstrument, ofstream &outputFile,
-    string * const &stationList, string * const &instrumentList) {
+void summaryPrint(const int table[][10], int numberOfStations, int numberOfInStruments,
+    const int eventsPerStation[], const int eventsPerInstrument[], ofstream &outputFile,
+    const string stationList[], const string instrumentList[]) {
 
     outputFile << "Seismic Events Summary Report" << endl;
 
     // print the tabulated events data
-    outputFile << setw(15) << "Station";
+    outputFile << setw(11) << "Station";
     for (int i = 0; i < numberOfInStruments; i++) {
-        outputFile << setw(20) << instrumentList[i];
+        outputFile << setw(16) << instrumentList[i];
     }
     outputFile << endl;
 
     // print for each station
     for (int i = 0; i < numberOfStations; i++) {
-        outputFile << setw(15) << stationList[i];
+        outputFile << setw(11) << stationList[i];
 
         for (int j = 0; j < numberOfInStruments; j++) {
-            outputFile << setw(20) << table[i][j];
+            outputFile << setw(16) << table[i][j];
         }
 
         outputFile << endl;
@@ -283,19 +256,19 @@ void summaryPrint(int ** const &table, int numberOfStations, int numberOfInStrum
 
     // print total events per station
     outputFile << "Total number of events per station" << endl << endl;
-    outputFile << setw(15) << "Station" << setw(10) << "Total" << endl;
+    outputFile << setw(11) << "Station" << setw(10) << "Total" << endl;
 
     for (int i = 0; i < numberOfStations; i++) {
-        outputFile << setw(15) << stationList[i] << setw(10) << eventsPerStation[i] << endl;
+        outputFile << setw(11) << stationList[i] << setw(10) << eventsPerStation[i] << endl;
     }
     outputFile << endl;
 
     // print total events per instrument
     outputFile << "Total number of events per instrument" << endl << endl;
-    outputFile << setw(20) << "Instrument" << setw(10) << "Total" << endl;
+    outputFile << setw(16) << "Instrument" << setw(10) << "Total" << endl;
 
     for (int i = 0; i < numberOfInStruments; i++) {
-        outputFile << setw(20) << instrumentList[i] << setw(10) << eventsPerInstrument[i] << endl;
+        outputFile << setw(16) << instrumentList[i] << setw(10) << eventsPerInstrument[i] << endl;
     }
     outputFile << endl;
 
@@ -343,12 +316,12 @@ void summaryPrint(int ** const &table, int numberOfStations, int numberOfInStrum
 }
 
 // find minima and maxima valuse in an integer array
-void minmax(int * const &array, int length, int &min, int &max) {
+void minmax(const int array[], int length, int &min, int &max) {
 
     min = array[0];
-    max = array[1];
+    max = array[0];
 
-    for (int i = 0; i < length; i++) {
+    for (int i = 1; i < length; i++) {
         if (array[i] < min) {
             // check for minima
             min = array[i];
