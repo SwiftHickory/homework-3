@@ -6,10 +6,7 @@
 -   This program is to total up the number of events recorded per instruments
 -   and per station of California Seismic Network.
 -
--   Version:
--   02/07/2015    Yang Yang    Initial Code
--
--   git
+-   github repository: https://github.com/SwiftHickory/homework-3.git
 ******************************************************************************/
 
 #include <iostream>
@@ -96,18 +93,17 @@ int main() {
     cout << "Number of stations: " << numberOfStations << endl;
     cout << "Number fo instruments: " << numberOfInStruments << endl;
 
-    // read the station list and initialize eventsPerStation
+    // read the station list
+    cout << "Reading stations..." << endl;
     for (int i = 0; i < numberOfStations; i++) {
         inputFile >> stationList[i];
     }
 
-    // read the instrument list and initialize eventsPerInstrument
+    // read the instrument list
+    cout << "Reading instruments..." << endl;
     for (int i = 0; i < numberOfInStruments; i++) {
         inputFile >> instrumentList[i];
     }
-
-    cout << "Station read" << endl;
-    cout << "Instruments read" << endl;
 
     // read the entry line by line
     cout << "Reading entries..." << endl;
@@ -150,8 +146,8 @@ int main() {
     }
 
     entryMessage(entryNumber, correctEntryNumber, errorFile);
-    cout << "Generating report..." << endl;
 
+    cout << "Generating report..." << endl;
     summaryPrint(table, numberOfStations, numberOfInStruments, eventsPerStation,
         eventsPerInstrument, outputFile, stationList, instrumentList);
 
@@ -173,10 +169,10 @@ int main() {
 // get the index of a string in a string array
 int indexInArray(const string &str, const string strArray[], int length) {
 
-    // compare the string with each element in the string array in order
+    // sequence search the string
     for (int i = 0; i < length; i++) {
         // if find the string, return the index
-        if (!str.compare(strArray[i])) {
+        if (str == strArray[i]) {
             return i;
         }
     }
@@ -233,7 +229,7 @@ void summaryPrint(const int table[][10], int numberOfStations, int numberOfInStr
     const int eventsPerStation[], const int eventsPerInstrument[], ofstream &outputFile,
     const string stationList[], const string instrumentList[]) {
 
-    outputFile << "Seismic Events Summary Report" << endl;
+    outputFile << "Seismic Events Summary Report" << endl << endl;
 
     // print the tabulated events data
     outputFile << setw(11) << "Station";
@@ -274,42 +270,66 @@ void summaryPrint(const int table[][10], int numberOfStations, int numberOfInStr
 
     // pring station(s) with most and least reocrd
     int min, max;
+    bool isFirstPrint = true;
     minmax(eventsPerStation, numberOfStations, min, max);
 
     outputFile  << "Station(s) with the most records is: ";
     for (int i = 0; i < numberOfStations; i++) {
         if (eventsPerStation[i] == max) {
-            outputFile  << stationList[i] << ", ";
+            if (isFirstPrint) {
+                isFirstPrint = false;
+            } else {
+                outputFile << ", ";
+            }
+            outputFile  << stationList[i];
         }
     }
-    outputFile  << "\b\b with " << max << " event(s)" << endl;
+    outputFile  << " with " << max << " event(s)" << endl;
 
     outputFile  << "Station(s) with the least records is: ";
+    isFirstPrint = true;
     for (int i = 0; i < numberOfStations; i++) {
         if (eventsPerStation[i] == min) {
-            outputFile  << stationList[i] << ", ";
+            if (isFirstPrint) {
+                isFirstPrint = false;
+            } else {
+                outputFile << ", ";
+            }
+            outputFile  << stationList[i];
         }
     }
-    outputFile  << "\b\b with " << min << " event(s)" << endl;
+    outputFile  << " with " << min << " event(s)" << endl << endl;
 
     // pring instrument(s) with most and least reocrd
     minmax(eventsPerInstrument, numberOfInStruments, min, max);
 
-    outputFile  << "instrument(s) with the most records is: ";
+    outputFile  << "Instrument(s) with the most records is: ";
+    isFirstPrint = true;
     for (int i = 0; i < numberOfInStruments; i++) {
         if (eventsPerInstrument[i] == max) {
-            outputFile  << instrumentList[i] << ", ";
+            if (isFirstPrint) {
+                isFirstPrint = false;
+            } else {
+                outputFile << ", ";
+            }
+            outputFile  << instrumentList[i];
         }
     }
-    outputFile  << "\b\b with " << max << " event(s)" << endl;
+    outputFile  << " with " << max << " event(s)" << endl;
 
-    outputFile  << "instrument(s) with the least records is: ";
+    outputFile  << "Instrument(s) with the least records is: ";
+    isFirstPrint = true;
     for (int i = 0; i < numberOfInStruments; i++) {
         if (eventsPerInstrument[i] == min) {
-            outputFile  << instrumentList[i] << ", ";
+            if (isFirstPrint) {
+                isFirstPrint = false;
+            } else {
+                outputFile << ", ";
+            }
+            outputFile  << instrumentList[i];
         }
     }
-    outputFile  << "\b\b with " << min << " event(s)" << endl;
+    outputFile  << " with " << min << " event(s)" << endl;
 
     return;
 
